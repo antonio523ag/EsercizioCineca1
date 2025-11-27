@@ -69,6 +69,12 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<!--solo dala versione 4.0.0 in poi-->
+		<dependency>
   			<groupId>org.springframework.boot</groupId>
   			<artifactId>spring-boot-h2console</artifactId>
 		</dependency>
