@@ -2,9 +2,16 @@ package dev.antoniogrillo.primoprogetto.service.impl;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import dev.antoniogrillo.primoprogetto.dto.AggiungiPiattoDTO;
+import dev.antoniogrillo.primoprogetto.dto.SingoloPiattoDTO;
+import dev.antoniogrillo.primoprogetto.mapper.PiattoMapper;
 import dev.antoniogrillo.primoprogetto.model.Piatto;
+import dev.antoniogrillo.primoprogetto.model.Ruolo;
 import dev.antoniogrillo.primoprogetto.model.Utente;
 import dev.antoniogrillo.primoprogetto.repository.PiattoRepository;
 import dev.antoniogrillo.primoprogetto.repository.UtenteRepository;
@@ -18,52 +25,58 @@ public class PiattoServiceImpl implements PiattoService{
 	
 	private final UtenteRepository utenteRepo;
 	private final PiattoRepository piattoRepo;
+	private final PiattoMapper mapper;
 	
 	
 
 	@Override
-	public long aggiungiPiatto(Piatto p) {
-		if(p==null||p.getId()!=0||
-				p.getDescrizione()==null||p.getDescrizione().isBlank()||
-				p.getListaIngredienti()==null||p.getListaIngredienti().isBlank())return 0;
+	public long aggiungiPiatto(AggiungiPiattoDTO p1) {
+		if(p1==null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire i dati del piatto");
+		Piatto p=mapper.toPiatto(p1);
+		if(p.getDescrizione()==null||p.getDescrizione().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire una descrizione");
+		if(p.getListaIngredienti()==null||p.getListaIngredienti().isBlank())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire gli ingredienti");
 		p=piattoRepo.save(p);
 		return p.getId();
 	}
 
 	@Override
-	public void modificaPiatto(Piatto p) {
-		if(p==null||p.getId()<=0||
-				p.getDescrizione()==null||p.getDescrizione().isBlank()||
-				p.getListaIngredienti()==null||p.getListaIngredienti().isBlank())return;
+	public void modificaPiatto(SingoloPiattoDTO p1) {
+		if(p1==null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire i dati del piatto");
+		if(p1.getId()<=0)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"non esistono piatti con id 0 o negativo");
+		Piatto p= mapper.toPiatto(p1);
+		if(p.getDescrizione()==null||p.getDescrizione().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire una descrizione");
+		if(p.getListaIngredienti()==null||p.getListaIngredienti().isBlank())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire gli ingredienti");
 		piattoRepo.save(p);
 		
 	}
 
 	@Override
-	public Piatto getById(long id) {
-		return piattoRepo.findById(id).orElse(null);
+	public SingoloPiattoDTO getById(long id) {
+		Piatto p=piattoRepo.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"non esiste nessun piatto con id "+id));
+		return mapper.toSingoloPiattoDTO(p);
 	}
 
 	@Override
-	public List<Piatto> getAllPiatti() {
-		return piattoRepo.findAll();
+	public List<SingoloPiattoDTO> getAllPiatti(long idUtente) {
+		Utente u=utenteRepo.findById(idUtente).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"nessun utente"));
+		if(u.getRuolo()!=Ruolo.ADMIN) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"non hai i diritti per visualizzare tutti i piatti");
+		List<Piatto> p= piattoRepo.findAll();
+		return mapper.toSingoloPiattoDTO(p);
 	}
 
 	@Override
 	public void eliminaPiatto(Piatto p) {
-		//TODO dobbiamo gestire le relazioni con la tabella utente_piatto_unique
-		piattoRepo.delete(p);
+		eliminaPiatto(p.getId());
 		
 	}
 
 	@Override
 	public void eliminaPiatto(long id) {
-		//TODO dobbiamo gestire le relazioni con la tabella utente_piatto_unique
 		piattoRepo.deletePiatto(id);
 	}
 
 	@Override
-	public List<Piatto> getPiattiDiAltriUtenti(long idUtente) {
+	public List<SingoloPiattoDTO> getPiattiDiAltriUtenti(long idUtente) {
 //		List<Piatto> piatti=getAllPiatti();
 //		Utente u = utenteRepo.findById(idUtente).orElse(null);
 //		if(u==null||u.getPiatti()==null)return piatti;
@@ -71,9 +84,15 @@ public class PiattoServiceImpl implements PiattoService{
 //			piatti.removeIf(p1->p1.getId()==p.getId());
 //		}
 //		return piatti;
-		Utente u=utenteRepo.findById(idUtente).orElse(null);
-		if(u==null)return piattoRepo.findAll();
-		return piattoRepo.findAltriPiatti(u);
+		Utente u=utenteRepo.findById(idUtente).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"nessun utente"));
+		List<Piatto> p= piattoRepo.findAltriPiatti(u);
+		return mapper.toSingoloPiattoDTO(p);
+	}
+	
+	@Override
+	public List<SingoloPiattoDTO> getPiattiPerCitta(String nomeCitta){
+		List<Piatto> piatti=piattoRepo.findByCitta(nomeCitta.trim());
+		return mapper.toSingoloPiattoDTO(piatti);
 	}
 
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import dev.antoniogrillo.primoprogetto.dto.AggiungiPiattoDTO;
 import dev.antoniogrillo.primoprogetto.dto.SingoloPiattoDTO;
 import dev.antoniogrillo.primoprogetto.model.Piatto;
 
@@ -26,4 +27,21 @@ public class PiattoMapper {
 				.map(p1->this.toSingoloPiattoDTO(p1))
 				.toList();
 	}
+	
+	public Piatto toPiatto(AggiungiPiattoDTO dto) {
+		Piatto p=new Piatto();
+		p.setDescrizione(dto.getNome());
+		p.setListaIngredienti(dto.getIngredienti());
+		return p;
+	}
+	
+	public Piatto toPiatto(SingoloPiattoDTO dto) {
+		Piatto p=new Piatto();
+		p.setDescrizione(dto.getNomePiatto());
+		p.setListaIngredienti(dto.getIngredienti());
+		p.setId(dto.getId());
+		return p;
+	}
+	
+	
 }

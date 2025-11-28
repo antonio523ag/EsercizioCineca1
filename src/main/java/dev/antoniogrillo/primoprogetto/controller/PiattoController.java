@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.antoniogrillo.primoprogetto.dto.AggiungiPiattoDTO;
+import dev.antoniogrillo.primoprogetto.dto.SingoloPiattoDTO;
 import dev.antoniogrillo.primoprogetto.model.Piatto;
 import dev.antoniogrillo.primoprogetto.service.def.PiattoService;
 import lombok.RequiredArgsConstructor;
@@ -29,39 +32,42 @@ import lombok.RequiredArgsConstructor;
 public class PiattoController {
 	private final PiattoService service;
 	
-	@PostMapping("/piatto/add")
-	public ResponseEntity<Long> creaPiatto(@RequestBody Piatto p){
+	@PostMapping("/authorized/piatto/add")
+	public ResponseEntity<Long> creaPiatto(@RequestBody AggiungiPiattoDTO p){
 		long id=service.aggiungiPiatto(p);
-		if(id>0) return ResponseEntity.ok(id);
-		else return ResponseEntity.badRequest().build();
+		return ResponseEntity.ok(id);
 	}
 	
-	@PutMapping("/piatto/modifica")
-	public ResponseEntity<Void> modificaPiatto(@RequestBody Piatto p){
+	@PutMapping("/authorized/piatto/modifica")
+	public ResponseEntity<Void> modificaPiatto(@RequestBody SingoloPiattoDTO p){
 		service.modificaPiatto(p);
 		return ResponseEntity.ok().build();
 	}
 	
-	@DeleteMapping("/piatto/{id}/elimina")
+	@DeleteMapping("/admin/piatto/{id}/elimina")
 	public ResponseEntity<Void> eliminaPiatto(@PathVariable long id){
 		service.eliminaPiatto(id);
 		return ResponseEntity.ok().build();
 	}
 	
-	@GetMapping("/piatto/{id}")
-	public ResponseEntity<Piatto> getById(@PathVariable long id){
-		Piatto p=service.getById(id);
-		if(p!=null)return ResponseEntity.ok(p);
-		else return ResponseEntity.notFound().build();
+	@GetMapping("/authorized/piatto/{id}")
+	public ResponseEntity<SingoloPiattoDTO> getById(@PathVariable long id){
+		SingoloPiattoDTO p=service.getById(id);
+		return ResponseEntity.notFound().build();
 	}
 	
-	@GetMapping("/piatto/all")
-	public ResponseEntity<List<Piatto>> getAll(){
-		return ResponseEntity.ok(service.getAllPiatti());
+	@GetMapping("/admin/piatto/all/{idUtente}")
+	public ResponseEntity<List<SingoloPiattoDTO>> getAll(@PathVariable long idUtente){
+		return ResponseEntity.ok(service.getAllPiatti(idUtente));
 	}
 	
-	@GetMapping("/piatto/all/{idUtente}")
-	public ResponseEntity<List<Piatto>> getAltriPiatti(@PathVariable long idUtente){
+	@GetMapping("/authorized/piatto/altro/{idUtente}")
+	public ResponseEntity<List<SingoloPiattoDTO>> getAltriPiatti(@PathVariable long idUtente){
 		return ResponseEntity.ok(service.getPiattiDiAltriUtenti(idUtente));
+	}
+	
+	@GetMapping("/authorized/piatto/citta")
+	public ResponseEntity<List<SingoloPiattoDTO>> getPiattiPerCitta(@RequestParam String citta){
+		return ResponseEntity.ok(service.getPiattiPerCitta(citta));
 	}
 }

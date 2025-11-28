@@ -1,6 +1,11 @@
 package dev.antoniogrillo.primoprogetto.model;
 
+import java.util.Collection;
 import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,7 +29,7 @@ import lombok.Setter;
 @AllArgsConstructor //crea un costruttore con tutti i parametri nell'ordine in cui sono definiti nella classe
 @Getter //crea i getter per tutte le variabili
 @Setter //crea i setter per tutte le variabili
-public class Utente {
+public class Utente implements UserDetails{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
@@ -34,6 +39,7 @@ public class Utente {
 	private String email;
 	private String nome;
 	private String cognome;
+	private Ruolo ruolo;
 	
 	@ManyToMany(mappedBy = "utenti")
 	private List<Piatto> piatti;
@@ -41,5 +47,15 @@ public class Utente {
 	@ManyToOne
 	@JoinColumn(name="indirizzo_fk")
 	private Indirizzo indirizzo;
+
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return List.of(new SimpleGrantedAuthority("ROLE_"+ruolo));
+	}
+
+	@Override
+	public String getUsername() {
+		return email;
+	}
 	
 }

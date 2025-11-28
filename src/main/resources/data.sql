@@ -1,0 +1,14 @@
+insert into Utente(Password,Email,Nome,Cognome,Ruolo) values ('P4ssw0rd!1','a.grillo@gmail.com','Antonio','Grillo',0);
+insert into Citta(nome_della_citta,version) values('Roma',1);
+insert into Citta(nome_della_citta,version) values('Milano',1);
+insert into Citta(nome_della_citta,version) values('Casalecchio Di Reno',1);
+insert into Citta(nome_della_citta,version) values('Palermo',1);
+insert into Citta(nome_della_citta,version) values('Foggia',1);
+insert into Citta(nome_della_citta,version) values('Firenze',1);
+insert into Citta(nome_della_citta,version) values('Teano',1);
+insert into Piatto(descrizione,lista_ingredienti) values('carbonara','spaghetti,pecorino,pepe,tuorlo uovo,guanciale');
+insert into Piatto(descrizione,lista_ingredienti) values('cacio e pepe','spaghetti,pecorino,pepe');
+insert into Piatto(descrizione,lista_ingredienti) values('gricia','spaghetti,pecorino,pepe,guanciale');
+insert into Piatto(descrizione,lista_ingredienti) values('amatriciana','spaghetti,pecorino,pepe,pomodoro,guanciale');
+insert into piatti_per_utente(utente_fk,piatto_fk) values(1,1);
+insert into piatti_per_utente(utente_fk,piatto_fk) values(1,4);

@@ -7,4 +7,6 @@ spring:
   h2:
     console:
       enabled: true
-      path: /console
+      path: /all/console
+  jpa:
+    defer-datasource-initialization: true

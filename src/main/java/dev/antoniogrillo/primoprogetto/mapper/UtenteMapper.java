@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import dev.antoniogrillo.primoprogetto.dto.ModificaUtenteDTO;
 import dev.antoniogrillo.primoprogetto.dto.RegistraUtenteDTO;
 import dev.antoniogrillo.primoprogetto.dto.VisualizzaUtenteDTO;
 import dev.antoniogrillo.primoprogetto.model.Utente;
@@ -20,8 +21,17 @@ public class UtenteMapper {
 		Utente u=new Utente();
 		u.setCognome(dto.cognome());
 		u.setNome(dto.nome());
-		u.setEmail(dto.email());
+		u.setEmail(dto.email().trim());
 		u.setPassword(dto.password());
+		return u;
+	}
+	
+	public Utente toUtente(ModificaUtenteDTO dto) {
+		Utente u=new Utente();
+		u.setCognome(dto.getCognome());
+		u.setPassword(dto.getPassword());
+		u.setNome(dto.getNome());
+		u.setId(dto.getId());
 		return u;
 	}
 	
@@ -31,6 +41,7 @@ public class UtenteMapper {
 		dto.setNome(u.getNome());
 		dto.setEmail(u.getEmail());
 		dto.setPiattiScelti(piattoMapper.toSingoloPiattoDTO(u.getPiatti()));
+		dto.setRuolo(u.getRuolo().name().toLowerCase());
 		return dto;
 	}
 	

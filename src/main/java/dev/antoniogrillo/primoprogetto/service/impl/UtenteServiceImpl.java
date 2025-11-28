@@ -2,21 +2,24 @@ package dev.antoniogrillo.primoprogetto.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import dev.antoniogrillo.primoprogetto.dto.LoginRequestDTO;
+import dev.antoniogrillo.primoprogetto.dto.ModificaUtenteDTO;
 import dev.antoniogrillo.primoprogetto.dto.RegistraUtenteDTO;
 import dev.antoniogrillo.primoprogetto.dto.VisualizzaUtenteDTO;
 import dev.antoniogrillo.primoprogetto.exception.PiattoGiaPresenteException;
 import dev.antoniogrillo.primoprogetto.mapper.UtenteMapper;
 import dev.antoniogrillo.primoprogetto.model.Piatto;
+import dev.antoniogrillo.primoprogetto.model.Ruolo;
 import dev.antoniogrillo.primoprogetto.model.Utente;
 import dev.antoniogrillo.primoprogetto.repository.PiattoRepository;
 import dev.antoniogrillo.primoprogetto.repository.UtenteRepository;
+import dev.antoniogrillo.primoprogetto.security.GestoreToken;
 import dev.antoniogrillo.primoprogetto.service.def.UtenteService;
 
 @Service
@@ -28,31 +31,28 @@ public class UtenteServiceImpl implements UtenteService {
 	private PiattoRepository piattoRepo;
 	@Autowired
 	private UtenteMapper mapper;
+	@Autowired
+	private GestoreToken token;
 	
 	
 	@Override
 	public void registraUtente(RegistraUtenteDTO dto) {
+		if(dto==null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire i dati dell'utente");
 		Utente u=mapper.toUtente(dto);
-		if(u==null||
-				u.getId()>0||
-				u.getEmail()==null||
-				u.getEmail().isBlank()||
-				u.getPassword()==null||
-				u.getPassword().isBlank())return;
-		u.setEmail(u.getEmail().trim());
+		if(u.getEmail()==null||u.getEmail().isBlank())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi insere un'email");
+		if(u.getPassword()==null||u.getPassword().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire una password");
+		u.setRuolo(Ruolo.UTENTE);
 		utenteRepo.save(u);
 		
 	}
 
 	@Override
-	public void modificaUtente(Utente u) {
-		if(u==null||
-				u.getId()==0||
-				u.getEmail()==null||
-				u.getEmail().isBlank()||
-				u.getPassword()==null||
-				u.getPassword().isBlank())return;
-		u.setEmail(u.getEmail().trim());
+	public void modificaUtente(ModificaUtenteDTO dto) {
+		if(dto==null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire i dati dell'utente");
+		if(dto.getId()<=0)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"non esistono utenti con id 0 o inferiore");
+		Utente u=mapper.toUtente(dto);
+		if(u.getEmail()==null||u.getEmail().isBlank())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi insere un'email");
+		if(u.getPassword()==null||u.getPassword().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire una password");
 		utenteRepo.save(u);
 		
 	}
@@ -64,7 +64,9 @@ public class UtenteServiceImpl implements UtenteService {
 	}
 
 	@Override
-	public List<VisualizzaUtenteDTO> getAllUtenti() {
+	public List<VisualizzaUtenteDTO> getAllUtenti(long id) {
+		Utente u= utenteRepo.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+		if(u.getRuolo()!=Ruolo.ADMIN)throw new ResponseStatusException(HttpStatus.FORBIDDEN,"non hai i diritti");
 		return mapper.toVisualizzaUtenteDTO(utenteRepo.findAll());
 	}
 
@@ -150,7 +152,7 @@ public class UtenteServiceImpl implements UtenteService {
 	}
 
 	@Override
-	public VisualizzaUtenteDTO login(String email, String password) {
+	public VisualizzaUtenteDTO login(LoginRequestDTO login) {
 //		List<Utente> utenti=utenteRepo.findAll();
 //		return utenti.stream()
 //				//.parallel()
@@ -158,9 +160,26 @@ public class UtenteServiceImpl implements UtenteService {
 //				.filter(u->u.getPassword().equals(password))
 //				.findAny()
 //				.orElse(null);
-		Utente u= utenteRepo.findByEmailAndPassword(email.trim(), password)
+		if(login==null)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire le credenziali per la login");
+		if(login.getEmail()==null||login.getEmail().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi insere una email valida per la login");
+		if(login.getPassword()==null||login.getPassword().isBlank())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire una password valida per la login");
+		Utente u= utenteRepo.findByEmailAndPassword(login.getEmail().trim(), login.getPassword())
 				.orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"nessun utente con questa email e/o password"));
-		return mapper.toVisualizzaUtenteDTO(u);
+		VisualizzaUtenteDTO result= mapper.toVisualizzaUtenteDTO(u);
+		String tokenJwt=token.creaToken(u);
+		result.setToken(tokenJwt);
+		return result;
+	}
+
+	@Override
+	public void registraAdmin(RegistraUtenteDTO dto) {
+		if(dto==null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire i dati dell'utente");
+		Utente u=mapper.toUtente(dto);
+		if(u.getEmail()==null||u.getEmail().isBlank())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi insere un'email");
+		if(u.getPassword()==null||u.getPassword().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"devi inserire una password");
+		u.setRuolo(Ruolo.ADMIN);
+		utenteRepo.save(u);
+		
 	}
 
 }

@@ -37,4 +37,6 @@ public interface UtenteRepository extends JpaRepository<Utente, Long> {
 	
 	public List<Utente> findAllByIndirizzo_ViaAndEmailAndIndirizzoIsNotNull(String via,String Email);
 	
+	public Optional<Utente> findByEmail(String email);
+	
 }

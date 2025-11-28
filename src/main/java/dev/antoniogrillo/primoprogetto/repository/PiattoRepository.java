@@ -19,4 +19,13 @@ public interface PiattoRepository extends JpaRepository<Piatto, Long> {
 	
 	@Query("select p from Piatto p where :u not member of p.utenti")
 	public List<Piatto> findAltriPiatti(Utente u);
+	
+	
+	@Query(nativeQuery = true ,value="select distinct * from Piatto p "+
+					"join piatti_per_utente pu on p.id=pu.piatto_fk "+
+					"join Utente u on u.id=pu.utente_fk "+
+					"join Indirizzo i on i.id = u.indirizzo_fk "+
+					"join Citta c on c.id=i.citta_fk "+
+					"where c.nome_della_citta = :citta")
+	public List<Piatto> findByCitta(String citta);
 }
